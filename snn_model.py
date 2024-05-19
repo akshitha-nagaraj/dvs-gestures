@@ -4,6 +4,7 @@ import torch.nn as nn
 from snntorch import surrogate
 from snntorch import utils
 
+#
 def create_snn_network(input_size, num_classes):
     beta = 0.5  # Decay rate for the leaky integrate-and-fire neuron
     spike_grad = surrogate.fast_sigmoid()  # Surrogate gradient for backpropagation
