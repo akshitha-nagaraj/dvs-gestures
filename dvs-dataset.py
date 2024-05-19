@@ -49,3 +49,66 @@ cached_testset = DiskCachedDataset(test_dataset, cache_path='./cache/dvs/test')
 # Create data loaders
 trainloader = DataLoader(cached_trainset, batch_size=128, collate_fn=tonic.collation.PadTensors())
 testloader = DataLoader(cached_testset, batch_size=128, collate_fn=tonic.collation.PadTensors())
+
+# Specify the sensor size and number of classes based on your dataset
+sensor_size = (2, 128, 128)  # This should be set based on your dataset specifics
+num_classes = 11  # Adjust based on actual number of classes in your dataset
+
+model = create_snn_network(sensor_size, num_classes)
+# forward_pass(model, data, device)
+
+# Define your optimizer and loss function here
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+loss_fn = torch.nn.CrossEntropyLoss()  # Example, adjust based on your specific needs
+
+
+# for data, target in trainloader:
+#         spk_rec = forward_pass(model, data, device)
+        # Further processing like loss computation, backward pass, etc.
+
+accuracy_history = []  # To store accuracy after each epoch
+# Training loop
+num_epochs = 10  # Set the number of epochs
+for epoch in range(num_epochs):
+    model.train()
+    for data, targets in trainloader:
+        data, targets = data.to(device), targets.to(device)
+
+        # Forward pass
+        spk_rec = forward_pass(model, data)
+
+        # Loss calculation
+        loss = loss_fn(spk_rec, targets)
+
+        # Backpropagation
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        print(f"Epoch {epoch}, Loss: {loss.item()}")
+
+    # Evaluation
+    model.eval()
+    with torch.no_grad():
+        correct, total = 0, 0
+        for data, targets in testloader:
+            data, targets = data.to(device), targets.to(device)
+            spk_rec = model(data)
+            predicted = spk_rec.argmax(dim=1)
+            correct += (predicted == targets).sum().item()
+            total += targets.size(0)
+
+        accuracy = 100 * correct / total
+        accuracy_history.append(accuracy)
+        print(f"Epoch {epoch}, Test Accuracy: {accuracy:.2f}%")
+
+# Plot Test Accuracy
+plt.ion()
+plt.figure(figsize=(8, 5))  # Set figure size
+plt.plot(accuracy_history, marker='o', linestyle='-', color='b')  # Line plot with markers
+plt.title("Test Accuracy Over Epochs")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy (%)")
+plt.grid(True)
+plt.show(block=True)
+# plt.savefig('accuracy_plot.png')
